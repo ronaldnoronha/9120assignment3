@@ -7,8 +7,7 @@ import java.util.HashMap;
 
 import javax.swing.SwingUtilities;
 
-import usyd.it.olympics.data.Booking;
-import usyd.it.olympics.data.Place;
+import usyd.it.olympics.data.BookingDetails;
 import usyd.it.olympics.gui.GuiFrontEnd;
 
 public class OlympicsDBClient {
@@ -17,7 +16,7 @@ public class OlympicsDBClient {
     private final GuiFrontEnd gui;
     // All database operations (logging in, running queries) are performed by this object
     private DatabaseBackend db;
-	private String memberID; // Member ID
+	private String memberId; // Member ID
 	private String memberType;
 
     OlympicsDBClient(String config) {
@@ -43,13 +42,13 @@ public class OlympicsDBClient {
     public void login(String memUser, char [] memPass) {
         setMessage("Connecting to DB.");
         try {
-        	memberID = null;
+        	memberId = null;
         	HashMap<String, Object> basicDetails = db.checkLogin(memUser, memPass);
             if(basicDetails!=null) {
-            	memberID = memUser;
-            	memberType = (String) basicDetails.get("member_type");
+            	memberId = memUser;
+            	memberType = (String) basicDetails.get("member_type"); // Could use for type-specific functionality
             	setMessage("Verified login, Fetching member details");
-            	HashMap<String, Object> fullDetails = db.memberDetails(memberID, memberType);
+            	HashMap<String, Object> fullDetails = db.getMemberDetails(memberId);
             	gui.getMainMenuScreen().showMemberDetails(fullDetails);
             	gui.showMainMenuScreen();
             	setMessage("Login successful.");
@@ -63,7 +62,7 @@ public class OlympicsDBClient {
 
     public void logout() {
         setMessage("Logging out");
-        memberID = null;
+        memberId = null;
         gui.showLoginScreen();
         setMessage("Logged out");
     }
@@ -74,7 +73,7 @@ public class OlympicsDBClient {
     public void showMemberDetails() {
         setMessage("Fetching member details.");
         try {
-            HashMap<String, Object> member = db.memberDetails(memberID, memberType);
+            HashMap<String, Object> member = db.getMemberDetails(memberId);
             gui.getMainMenuScreen().showMemberDetails(member);
             gui.showMainMenuScreen();
             setMessage("Details fetched.");
@@ -101,32 +100,32 @@ public class OlympicsDBClient {
     }
 
     //
-    // Bay Finder
+    // Journey Finder
     //
-    public void showMatchingBays(String address) {
-        setMessage("Fetching bay availabilities.");
+    public void showMatchingJourneys(String origin, String dest, Date date) {
+        setMessage("Fetching journey availabilities.");
         try {
-            ArrayList<HashMap<String, Object>> bays = db.getMatchingBays(address);
-            gui.getBayFinderScreen().showTuples(bays);
-            setMessage("All bays fetched.");
+            ArrayList<HashMap<String, Object>> journeys = db.findJourneys(origin, dest, date);
+            gui.getJourneyFinderScreen().showTuples(journeys);
+            setMessage("All journeys fetched.");
         } catch (OlympicsDBException e) {
             setMessage(e.getMessage());
-            gui.getBayFinderScreen().showTuples(new ArrayList<HashMap<String, Object>>());
+            gui.getJourneyFinderScreen().showTuples(new ArrayList<HashMap<String, Object>>());
         }
-        gui.showBayFinderScreen();
+        gui.showJourneyFinderScreen();
     }
     
-    public void showBayAvailability() {
-        setMessage("Fetching bay availabilities.");
-        gui.showBayFinderScreen();
+    public void showJourneyAvailability() {
+        setMessage("Fetching journey availabilities.");
+        gui.showJourneyFinderScreen();
     }
     
-    public void getBayDetails(int bay) {
+    public void getJourneyDetails(Integer journeyId) {
         setMessage("Retrieving details");
         try {
-        	HashMap<String, Object> details = db.getBayDetails(bay);
-            gui.getBayDetailsScreen().showBayDetails(details);
-            gui.showBayDetailsScreen();
+        	HashMap<String, Object> details = db.getJourneyDetails(journeyId);
+            gui.getJourneyDetailsScreen().showJourneyDetails(details);
+            gui.showJourneyDetailsScreen();
             setMessage("Details retrieved");
         } catch (OlympicsDBException e) {
             setMessage(e.getMessage());
@@ -136,12 +135,12 @@ public class OlympicsDBClient {
     public void makeBooking(String forMember, String vehicle, Date departs) {
         setMessage("Submitting booking");
         try {
-        	HashMap<String,Object> bookingDetails = db.makeBooking(memberID, 
+        	HashMap<String,Object> bookingDetails = db.makeBooking(memberId, 
         			forMember, departs);
         	if(bookingDetails==null) {
                 setMessage("Could not make booking");
         	} else {
-                gui.getReportScreen().show(Booking.getSummary(bookingDetails));
+                gui.getReportScreen().show(BookingDetails.getSummary(bookingDetails));
                 gui.showReportScreen();
                 setMessage("Submission complete");
         	}
@@ -150,26 +149,10 @@ public class OlympicsDBClient {
         }
     }
     
-    public void showFavouriteBay() {
-        setMessage("Retrieving bay details");
-        try {
-        	HashMap<String,Object> bay = db.getFavouriteBay();
-            if (bay == null)
-                setMessage("No bay details found");
-            else {    
-                gui.getBayDetailsScreen().showBayDetails(bay);
-                gui.showBayDetailsScreen();
-                setMessage("Bay details retrieved");
-            }
-        } catch (OlympicsDBException e) {
-            setMessage(e.getMessage());
-        }    
-    }
-
     public void showHistory() {
         setMessage("Fetching booking history.");
         try {
-            ArrayList<HashMap<String,Object>> bookings = db.allBookings();
+            ArrayList<HashMap<String,Object>> bookings = db.getMemberBookings(memberId);
             gui.getHistoryScreen().showBookings(bookings);
             gui.showHistoryScreen();
             setMessage("All bookings fetched.");
@@ -178,20 +161,18 @@ public class OlympicsDBClient {
         }    
     }
 
-    public void startBooking(int bayId) {
+    public void startBooking(String vehicle, Date departs) {
         setMessage("Fetching details to start booking.");
-        //HashMap<String, Object> place = db.getMemberHome(memberID);
-		//Integer placeid = Place.getPlaceId(place);
-		gui.getBookingsCreationScreen().startBooking();
+		gui.getBookingsCreationScreen().startBooking(vehicle, departs);
 		gui.showBookingsCreationScreen();
 		setMessage("Details fetched."); 
     }
 
-    public void showBookingDetails(int journeyId) {
+    public void showBookingDetails(Integer journeyid) {
        setMessage("Getting booking details");
         try {
-        	HashMap<String,Object> bookingDetails = db.getBookingDetails(memberID, journeyId);
-            gui.getReportScreen().show(Booking.getSummary(bookingDetails));
+        	HashMap<String,Object> bookingDetails = db.getBookingDetails(memberId, journeyid);
+            gui.getReportScreen().show(BookingDetails.getSummary(bookingDetails));
             gui.showReportScreen();
             setMessage("Details fetched.");
         } catch (OlympicsDBException e) {
@@ -199,5 +180,41 @@ public class OlympicsDBClient {
         }
     }
 
+	public void showEventBrowser() {
+       setMessage("Getting sports");
+        try {
+        	ArrayList<HashMap<String, Object>> sports = db.getSports();
+            gui.getEventBrowserScreen().setSports(sports);
+            gui.showEventBrowserScreen();
+            setMessage("Sports fetched.");
+        } catch (OlympicsDBException e) {
+            setMessage(e.getMessage());
+        }
+	}
+	
+	public void getEventResults(Integer eventid) {
+	       setMessage("Getting event results");
+	        try {
+	        	ArrayList<HashMap<String, Object>> eventDetails = db.getResultsOfEvent(eventid);
+	            gui.getEventResultsScreen().setTuples(eventDetails);
+	            gui.showEventResultsScreen();
+	            setMessage("Results fetched.");
+	        } catch (OlympicsDBException e) {
+	            setMessage(e.getMessage());
+	        }
+	}
+
+
+	public void getEvents(Integer sportId) {
+        setMessage("Retrieving events");
+        try {
+        	ArrayList<HashMap<String, Object>> events = db.getEventsOfSport(sportId);
+            gui.getEventBrowserScreen().showTuples(events);
+            gui.showEventBrowserScreen();
+            setMessage("Details retrieved");
+        } catch (OlympicsDBException e) {
+            setMessage(e.getMessage());
+        }
+	}
 
 }
