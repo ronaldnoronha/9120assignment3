@@ -54,7 +54,9 @@ public class LoginScreen extends GuiScreen {
     
     private void submit() {
         char[] input = pwdMemberUser.getPassword();
-        client_.login(txtMemberName.getText(), input);
+        //client_.login(txtMemberName.getText(), input);
+        //TODO 
+        client_.login("A000038267", "pencil".toCharArray());
         Arrays.fill(input, '0');
         pwdMemberUser.setText("");  
     }

@@ -136,7 +136,7 @@ public class OlympicsDBClient {
         setMessage("Submitting booking");
         try {
         	HashMap<String,Object> bookingDetails = db.makeBooking(memberId, 
-        			forMember, departs);
+        			forMember, vehicle, departs);
         	if(bookingDetails==null) {
                 setMessage("Could not make booking");
         	} else {
