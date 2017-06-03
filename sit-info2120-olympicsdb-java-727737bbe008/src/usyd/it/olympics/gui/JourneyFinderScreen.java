@@ -50,14 +50,18 @@ public class JourneyFinderScreen extends GuiScreen {
 		JLabel lblAddress = new JLabel("From");
 		choicePanel.add(lblAddress);
 		txtFrom = new JTextField();
-		txtFrom.setText("address");
+		
+		// TODO CHANGE TO 'address'
+		txtFrom.setText("Athletes Village");
 		choicePanel.add(txtFrom);
 		txtFrom.setColumns(20);
 
 		JLabel lblDest = new JLabel("Destination");
 		choicePanel.add(lblDest);
 		txtDest = new JTextField();
-		txtDest.setText("address");
+		
+		// TODO CHANGE TO 'address'
+		txtDest.setText("Sydney Olympic Park, Olympic Stadium");
 		choicePanel.add(txtDest);
 		txtDest.setColumns(20);
 
