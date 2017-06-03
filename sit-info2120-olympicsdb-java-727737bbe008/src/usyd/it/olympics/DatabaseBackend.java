@@ -316,35 +316,19 @@ public class DatabaseBackend {
 	ArrayList<HashMap<String, Object>> findJourneys(String fromPlace, String toPlace, Date journeyDate) throws OlympicsDBException {
 		// FIXME: Replace the following with REAL OPERATIONS!
 		ArrayList<HashMap<String, Object>> journeys = new ArrayList<>();
-		
-		
-		
-		// TODO REMOVE
-		//fromPlace = "Athletes Village";
-		//toPlace = "Sydney Olympic Park, Olympic Stadium";
-		///
-		
-		System.out.println(journeyDate.toString());
+	
 		// operations to convert date into a day range. 
 		
 		String date1 = "";
 		String date2 = "";
 		
-		// create date in a string format and use midnight to start
-		// find the date after the current date and use midnight for then. 
-		// use the latest query from 
 		SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM-yyyy");
-		
-		//int day = Integer.parseInt(sdf.format(journeyDate));
-
 		date1 += sdf.format(journeyDate)+" 12:00:00 AM";
-		System.out.println(date1);
 		Calendar cal = Calendar.getInstance();
         cal.setTime(journeyDate);
-        cal.add(Calendar.DATE, 1); //minus number would decrement the days
+        cal.add(Calendar.DATE, 1); 
         Date next_day = cal.getTime();
 		date2+=sdf.format(next_day)+" 12:00:00 AM";
-		System.out.println(date2);
         
 		String query = "select P1.place_name as depart_from, P2.place_name as arrive_to,journey_id,vehicle_code,depart_time,arrivetime,nbooked, capacity"
 				+ " from Journey join Place P1 on(from_place = P1.place_id)"
@@ -369,31 +353,6 @@ public class DatabaseBackend {
 						rs.getDate("depart_time"),rs.getDate("arrivetime"),
 						Integer.parseInt(rs.getString("capacity"))-Integer.parseInt(rs.getString("nbooked"))));
 				
-				
-				
-				
-				
-				//journey_id = Integer.parseInt(rs.getString("journey_id"));
-				//HashMap<String,Object> journey1 = new HashMap<String,Object>();
-				/*journeys.set(nr, new HashMap<String,Object>());
-				journeys.set("journey_id",Integer.valueOf(journey_id));
-				journey1.put("vehicle_code",rs.getString("vehicle_code"));
-				journey1.put("origin_name",rs.getString("depart_from"));
-				journey1.put("dest_name",rs.getString("arrive_to"));
-				journey1.put("when_departs",rs.getString("depart_time"));
-				journey1.put("when_arrives",rs.getString("arrivetime"));
-				journey1.put("available_seats",rs.getString("nbooked"));
-				*/
-				
-				
-				//journey1.clear();
-				System.out.println(journey_id);
-				System.out.println(journeys.get(nr).get("journey_id").toString());
-				System.out.println(journeys.get(nr).get("vehicle_code").toString());
-				System.out.println(journeys.get(nr).get("origin_name").toString());
-				System.out.println(journeys.get(nr).get("dest_name").toString());
-				System.out.println(journeys.get(nr).get("when_departs").toString());
-				System.out.println(journeys.get(nr).get("when_arrives").toString());
 				nr++;
 			}
 			System.out.println(journeys.size());
@@ -402,7 +361,7 @@ public class DatabaseBackend {
 			conn.close();
 		} catch (Exception e) {
 			System.err.println(e);
-			throw new OlympicsDBException("Error checking login details", e);
+			throw new OlympicsDBException("Error finding journeys", e);
 		}
 		return journeys;
 	}
@@ -451,28 +410,205 @@ public class DatabaseBackend {
 	 * @return Various details of journey - see JourneyDetails.java
 	 * @throws OlympicsDBException
 	 */
-	public HashMap<String,Object> getJourneyDetails(int bay) throws OlympicsDBException {
+	public HashMap<String,Object> getJourneyDetails(int journeyId) throws OlympicsDBException {
 		// FIXME: REPLACE FOLLOWING LINES WITH REAL OPERATION
 		// See the constructor in BayDetails.java
 		HashMap<String,Object> details = new HashMap<String,Object>();
-
-		details.put("journey_id", Integer.valueOf(17));
+		String query = "select P1.place_name as depart_from, P2.place_name as arrive_to,journey_id,vehicle_code,depart_time,arrivetime,nbooked, capacity"
+				+ " from Journey join Place P1 on(from_place = P1.place_id)"
+				+" join Place P2 on(to_place = P2.place_id) join Vehicle using(vehicle_code) "
+				+ " where journey_id = ?";
+		PreparedStatement stmt = null;
+		
+		try{
+			Connection conn = getConnection();
+			stmt = conn.prepareStatement(query);
+			stmt.setInt(1,journeyId);
+			ResultSet rs = stmt.executeQuery();
+			int nr = 0;	
+			
+			while (rs.next()){	
+				details.put("journey_id", Integer.valueOf(journeyId));
+				details.put("vehicle_code",rs.getString("vehicle_code"));
+				details.put("origin_name",rs.getString("depart_from"));
+				details.put("dest_name",rs.getString("arrive_to"));
+				details.put("when_departs",rs.getDate("depart_time"));
+				details.put("when_arrives",rs.getDate("arrivetime"));
+				details.put("capacity",rs.getInt("capacity"));
+				details.put("nbooked",rs.getInt("nbooked"));
+				/*journeys.add(createJourneyTuples(Integer.parseInt(rs.getString("journey_id")),
+						rs.getString("vehicle_code"),rs.getString("depart_from"),rs.getString("arrive_to"),
+						rs.getDate("depart_time"),rs.getDate("arrivetime"),
+						Integer.parseInt(rs.getString("capacity"))-Integer.parseInt(rs.getString("nbooked"))));
+				
+				System.out.println(journey_id);
+				System.out.println(journeys.get(nr).get("journey_id").toString());
+				System.out.println(journeys.get(nr).get("vehicle_code").toString());
+				System.out.println(journeys.get(nr).get("origin_name").toString());
+				System.out.println(journeys.get(nr).get("dest_name").toString());
+				System.out.println(journeys.get(nr).get("when_departs").toString());
+				System.out.println(journeys.get(nr).get("when_arrives").toString());
+			*/	nr++;
+			}
+			//System.out.println(journeys.size());
+			rs.close();
+			stmt.close();
+			conn.close();
+		} catch (Exception e) {
+			System.err.println(e);
+			throw new OlympicsDBException("Error checking login details", e);
+		}
+		
+		
+		/*details.put("journey_id", Integer.valueOf(journeyID));
 		details.put("vehicle_code", "XYZ124");
 		details.put("origin_name", "SIT");
 		details.put("dest_name", "Olympic Park");
 		details.put("when_departs", new Date());
 		details.put("when_arrives", new Date());
 		details.put("capacity", Integer.valueOf(6));
-		details.put("nbooked", Integer.valueOf(3));
+		details.put("nbooked", Integer.valueOf(3));*/
 
 		return details;
 	}
 
 	public HashMap<String,Object> makeBooking(String byStaff, String forMember,String Vehicle, Date departs) throws OlympicsDBException {
 		HashMap<String,Object> booking = null;
+		booking = new HashMap<String,Object>();
+		System.out.println(byStaff);
+		System.out.println(departs.toString());
+		
+		PreparedStatement stmt  = null;
+		String query = "select * from staff where member_id = ?";
+		boolean staffExists = false;
+		boolean availability = false;
+		try
+		{
+			Connection conn = getConnection();
+			stmt  = conn.prepareStatement(query);
+			stmt.setString(1,byStaff);
+			ResultSet rs = stmt.executeQuery(); 
+			if (rs.next()){
+				staffExists = true;				
+			}
+			rs.close();
+			stmt.close();
+			conn.close();
+		}
+		catch (Exception e) {
+			System.err.println(e);
+			throw new OlympicsDBException("Error checking Staff", e);
+		}
+		query = "select capacity, nbooked, journey_id from Journey join vehicle using(vehicle_code) where vehicle_code  = ? and depart_time = ?";
+		int journeyId = 0;
+		int nbooked = 0;
+		String date1 = "";
+		SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM-yyyy hh:mm:ss a");
+		date1 += sdf.format(departs);
+		System.out.println(date1);			
+		
+		try
+		{
+			Connection conn = getConnection();
+			stmt  = conn.prepareStatement(query);
+			stmt.setString(1,Vehicle);
+			stmt.setString(2,date1);
+			ResultSet rs = stmt.executeQuery(); 
+			if (rs.next()){
+				if (rs.getInt("nbooked")<rs.getInt("capacity")){
+					availability = true;
+					System.out.println("Availability"+availability);
+				}
+				nbooked = rs.getInt("nbooked");
+				journeyId = rs.getInt("journey_id");
+			}
+			rs.close();
+			stmt.close();
+			conn.close();
+		}
+		catch (Exception e) {
+			System.err.println(e);
+			throw new OlympicsDBException("Error checking availability", e);
+		}
+		
+		
+		query = "insert into booking values(?,?,current_timestamp,?)";
+		try
+		{
+			Connection conn = getConnection();
+			stmt  = conn.prepareStatement(query);
+			stmt.setString(1,forMember);
+			stmt.setString(2,byStaff);
+			stmt.setInt(3,journeyId);
+			
+			System.out.println(forMember);
+			System.out.println(byStaff);
+			System.out.println(journeyId);
+			ResultSet rs = stmt.executeQuery();
+			System.out.println("booking made");		
+			rs.close();
+			stmt.close();
+			conn.close();
+		}
+		catch (Exception e) {
+			System.err.println(e);
+			throw new OlympicsDBException("Booking couldnt be made", e);
+		}
+		
+		/*Statement stmt1 = null;
+		try {
+			Connection conn = getConnection();
+	        stmt1 = conn.createStatement(
+	            ResultSet.TYPE_SCROLL_SENSITIVE,
+	            ResultSet.CONCUR_UPDATABLE);
+
+	        ResultSet uprs = stmt1.executeQuery(
+	            "select * from booking");
+
+	        uprs.moveToInsertRow();
+	     	uprs.updateInt("journey_id", journeyId);
+	     	uprs.updateString("booked_for",forMember);
+	        uprs.updateString("booked_by",byStaff);
+	        uprs.updateString("when_booked",date1);
+	        uprs.insertRow();
+	        uprs.beforeFirst();
+	        System.out.println("booking made");
+	        uprs.close();
+			conn.close();
+			stmt1.close();
+	    } catch (Exception e ) {
+	    	System.err.println(e);
+			throw new OlympicsDBException("Booking couldnt be made", e);
+	    } 
+*/		
+		
+		
+		
+		query = "update journey set nbooked = ? where journey_id = ? and depart_time = ?";
+		try
+		{
+			Connection conn = getConnection();
+			stmt  = conn.prepareStatement(query);
+			stmt.setInt(1,nbooked+1);
+			stmt.setInt(2,journeyId);
+			stmt.setString(3,date1);
+			
+			ResultSet rs = stmt.executeQuery(); 
+			//if (rs.next()){
+				System.out.println("Journey updated");		
+			//}
+			rs.close();
+			stmt.close();
+			conn.close();
+		}
+		catch (Exception e) {
+			System.err.println(e);
+			throw new OlympicsDBException("Journey couldnt be updated", e);
+		}
+		
 
 		// FIXME: DUMMY FUNCTION NEEDS TO BE PROPERLY IMPLEMENTED
-		booking = new HashMap<String,Object>();
+		
 		booking.put("vehicle", "TR870R");
 		booking.put("start_day", "21/12/2020");
 		booking.put("start_time", new Date());
