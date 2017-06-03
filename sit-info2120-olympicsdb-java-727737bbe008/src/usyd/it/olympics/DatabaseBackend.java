@@ -240,26 +240,39 @@ public class DatabaseBackend {
 	 */
 	ArrayList<HashMap<String, Object>> getEventsOfSport(Integer sportname) throws OlympicsDBException {
 		// FIXME: Replace the following with REAL OPERATIONS!
-
+		String query = "select event_name,EVENT_GENDER, Place_name, EVENT_START , EVENT.EVENT_ID, sport_id  "
+				   + " from event"
+				   + "  inner join sport  using (sport_id)" 
+				   + " inner join place on (sport_venue = place_id)"
+				   + "where   sport_id = ?";
+		Connection conn = null;
 		ArrayList<HashMap<String, Object>> events = new ArrayList<>();
+		try {
 
-		HashMap<String,Object> event1 = new HashMap<String,Object>();
-		event1.put("event_id", Integer.valueOf(123));
-		event1.put("sport_id", Integer.valueOf(3));
-		event1.put("event_name", "Women's 5km Egg & Spoon");
-		event1.put("event_gender", "W");
-		event1.put("sport_venue", "ANZ Stadium");
-		event1.put("event_start", new Date());
-		events.add(event1);
+			conn = getConnection();
+			PreparedStatement stmt = conn.prepareStatement(query);
+			stmt.setInt(1, sportname);
+			ResultSet rs = stmt.executeQuery();
 
-		HashMap<String,Object> event2 = new HashMap<String,Object>();
-		event2.put("event_id", Integer.valueOf(123));
-		event2.put("sport_id", Integer.valueOf(3));
-		event2.put("event_name", "Men's 40km Cross-country Hopping");
-		event2.put("event_gender", "M");
-		event2.put("sport_venue", "Bennelong Point");
-		event2.put("event_start", new Date());
-		events.add(event2);
+			while (rs.next()) {
+				HashMap<String, Object> event1 = new HashMap<String, Object>();
+				event1.put("event_id",rs.getInt("EVENT_ID"));
+				event1.put("sport_id",rs.getInt("sport_id"));
+				event1.put("event_name", rs.getString("event_name"));
+				event1.put("event_gender", rs.getString("EVENT_GENDER"));
+				event1.put("sport_venue", rs.getString("Place_name"));
+				event1.put("event_start",rs.getDate("EVENT_START"));
+				events.add(event1);
+
+			}
+			rs.close();
+			stmt.close();
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			reallyClose(conn);
+		}
 
 		return events;
 	}
@@ -272,33 +285,39 @@ public class DatabaseBackend {
 	 */
 	ArrayList<HashMap<String, Object>> getResultsOfEvent(Integer eventId) throws OlympicsDBException {
 		// FIXME: Replace the following with REAL OPERATIONS!
-
+		String query = "SELECT MEMBER.GIVEN_NAMES, MEMBER.FAMILY_NAME, COUNTRY.country_name, PARTICIPATES.medal "+
+				" FROM event "+
+				" JOIN PARTICIPATES on EVENT.event_id = Participates.event_id"+
+				" JOIN MEMBER on MEMBER.member_id = PARTICIPATES.ATHLETE_ID"+
+				" JOIN COUNTRY on COUNTRY.COUNTRY_CODE = MEMBER.COUNTRY_CODE"+
+				" WHERE event.event_id = ?";
+		Connection conn = null;
 		ArrayList<HashMap<String, Object>> results = new ArrayList<>();
+		
+		try {
 
+			conn = getConnection();
+			PreparedStatement stmt = conn.prepareStatement(query);
+			stmt.setInt(1, eventId);
+			ResultSet rs = stmt.executeQuery();
 
-		HashMap<String,Object> result1 = new HashMap<String,Object>();
-		result1.put("participant", "The Frog, Kermit");
-		result1.put("country_name", "Fraggle Rock");
-		result1.put("medal", "Gold");
+			while (rs.next()) {
+
+		HashMap<String, Object> result1 = new HashMap<String, Object>();
+		result1.put("participant",rs.getString("Given_names") + " " + rs.getString("FAMILY_NAME"));
+		result1.put("country_name",rs.getString("Country_name"));
+		result1.put("medal",rs.getString("medal"));
 		results.add(result1);
 
-		HashMap<String,Object> result2 = new HashMap<String,Object>();
-		result2.put("participant", "Cirus, Miley");
-		result2.put("country_name", "United States");
-		result2.put("medal", "Silver");
-		results.add(result2);
-
-		HashMap<String,Object> result3 = new HashMap<String,Object>();
-		result3.put("participant", "Bond, James");
-		result3.put("country_name", "Great Britain");
-		result3.put("medal", "Bronze");
-		results.add(result3);
-
-		HashMap<String,Object> result4 = new HashMap<String,Object>();
-		result4.put("participant", "McKenzie, Namor");
-		result4.put("country_name", "Atlantis");
-		result4.put("medal", null);
-		results.add(result4);
+			}
+			rs.close();
+			stmt.close();
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			reallyClose(conn);
+		}
 
 		return results;
 	}
@@ -378,32 +397,46 @@ public class DatabaseBackend {
 		journey1.put("available_seats",availability);
 		return journey1;
 	}
-
-	ArrayList<HashMap<String,Object>> getMemberBookings(String memberID) throws OlympicsDBException {
-		ArrayList<HashMap<String,Object>> bookings = new ArrayList<HashMap<String,Object>>();
-
+	ArrayList<HashMap<String, Object>> getMemberBookings(String memberID) throws OlympicsDBException {
+		ArrayList<HashMap<String, Object>> bookings = new ArrayList<HashMap<String, Object>>();
+		// browse booking
 		// FIXME: DUMMY FUNCTION NEEDS TO BE PROPERLY IMPLEMENTED
-		HashMap<String,Object> bookingex1 = new HashMap<String,Object>();
-		bookingex1.put("journey_id", Integer.valueOf(17));
-		bookingex1.put("vehicle_code", "XYZ124");
-		bookingex1.put("origin_name", "SIT");
-		bookingex1.put("dest_name", "Olympic Park");
-		bookingex1.put("when_departs", new Date());
-		bookingex1.put("when_arrives", new Date());
-		bookings.add(bookingex1);
 
-		HashMap<String,Object> bookingex2 = new HashMap<String,Object>();
-		bookingex2.put("journey_id", Integer.valueOf(25));
-		bookingex2.put("vehicle_code", "ABC789");
-		bookingex2.put("origin_name", "Olympic Park");
-		bookingex2.put("dest_name", "Sydney Airport");
-		bookingex2.put("when_departs", new Date());
-		bookingex2.put("when_arrives", new Date());
-		bookings.add(bookingex2);
+		String query = "select journey_id, vehicle_code, arrivetime, depart_time," + " f.place_name fromPlace,"
+				+ " t.place_name toPlace" + " from booking join journey using (journey_id)"
+				+ " inner join place f on from_place = f.place_id" + " inner join place t on to_place = t.place_id"
+				+ " where booked_for = ? ORDER BY depart_time DESC";
+		Connection conn = null;
+		try {
+
+			conn = getConnection();
+			PreparedStatement stmt = conn.prepareStatement(query);
+			stmt.setString(1, memberID);
+			ResultSet rs = stmt.executeQuery();
+
+			while (rs.next()) {
+				HashMap<String, Object> booking = new HashMap<String, Object>();
+
+				booking.put("journey_id", rs.getInt("journey_id"));
+				booking.put("vehicle_code", rs.getString("vehicle_code"));
+				booking.put("origin_name", rs.getString("fromPlace"));
+				booking.put("dest_name", rs.getString("toPlace"));
+				booking.put("when_departs", rs.getDate("depart_time"));
+				booking.put("when_arrives", rs.getDate("arrivetime"));
+
+				bookings.add(booking);
+			}
+			rs.close();
+			stmt.close();
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			reallyClose(conn);
+		}
 
 		return bookings;
 	}
-
 	/**
 	 * Get details for a specific journey
 	 * 
@@ -619,51 +652,97 @@ public class DatabaseBackend {
 		return booking;
 	}
 
-	public HashMap<String,Object> getBookingDetails(String memberID, Integer journeyId) throws OlympicsDBException {
-		HashMap<String,Object> booking = null;
+	public HashMap<String, Object> getBookingDetails(String memberID, Integer journeyId) throws OlympicsDBException {
+		HashMap<String, Object> booking = null;
+
+		String query = "SELECT journey.journey_id , journey.DEPART_TIME," + " t.place_name toPlace, "
+				+ " f.place_name fromPlace, " + " journey.VEHICLE_CODE, "
+				+ " member.TITLE || ' ' ||  member.GIVEN_NAMES || ' ' || member.FAMILY_NAME bookedFor,"
+				+ " staff.TITLE || ' ' ||  staff.GIVEN_NAMES || ' ' || staff.FAMILY_NAME bookedBy,"
+				+ " booking.WHEN_BOOKED," + " journey.arrivetime" + " FROM journey"
+				+ " INNER JOIN vehicle on vehicle.VEHICLE_CODE = journey.VEHICLE_CODE"
+				+ " INNER JOIN place t on journey.to_place = t.place_id"
+				+ " INNER JOIN place f on journey.from_place = f.place_id   "
+				+ " INNER JOIN booking on journey.journey_id = booking.journey_id"
+				+ " INNER JOIN member on booking.BOOKED_FOR = member.MEMBER_ID"
+				+ " INNER JOIN member staff on booking.BOOKED_BY = staff.MEMBER_ID"
+				+ " WHERE journey.journey_id = ? AND booking.BOOKED_FOR = ?";
+		Connection conn = null;
+		try {
+
+			conn = getConnection();
+			PreparedStatement stmt = conn.prepareStatement(query);
+			stmt.setInt(1, journeyId);
+			stmt.setString(2, memberID);
+			ResultSet rs = stmt.executeQuery();
+
+			while (rs.next()) {
+				booking = new HashMap<String, Object>();
+
+				booking.put("journey_id", rs.getInt("journey_id"));
+				booking.put("vehicle_code", rs.getString("VEHICLE_CODE"));
+				booking.put("when_departs", rs.getDate("DEPART_TIME"));
+				booking.put("dest_name", rs.getString("toPlace"));
+				booking.put("origin_name", rs.getString("fromPlace"));
+				booking.put("bookedby_name", rs.getString("bookedBy"));
+				booking.put("bookedfor_name", rs.getString("bookedFor"));
+				booking.put("when_booked", rs.getDate("WHEN_BOOKED"));
+				booking.put("when_arrives", rs.getDate("arrivetime"));
+			}
+			rs.close();
+			stmt.close();
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			reallyClose(conn);
+		}
 
 		// FIXME: DUMMY FUNCTION NEEDS TO BE PROPERLY IMPLEMENTED
-		booking = new HashMap<String,Object>();
-
-		booking.put("journey_id", journeyId);
-		booking.put("vehicle_code", "TR870R");
-		booking.put("when_departs", new Date());
-		booking.put("dest_name", "SIT");
-		booking.put("origin_name", "Wentworth");
-		booking.put("bookedby_name", "Mrs Piggy");
-		booking.put("bookedfor_name", "Mike");
-		booking.put("when_booked", new Date());
-		booking.put("when_arrives", new Date());
-
+		/*
+		 * booking = new HashMap<String,Object>();
+		 * 
+		 * booking.put("journey_id", journeyId); booking.put("vehicle_code",
+		 * "TR870R"); booking.put("when_departs", new Date());
+		 * booking.put("dest_name", "SIT"); booking.put("origin_name",
+		 * "Wentworth"); booking.put("bookedby_name", "Mrs Piggy");
+		 * booking.put("bookedfor_name", "Mike"); booking.put("when_booked", new
+		 * Date()); booking.put("when_arrives", new Date());
+		 */
 
 		return booking;
 	}
-
 	public ArrayList<HashMap<String, Object>> getSports() throws OlympicsDBException {
-		ArrayList<HashMap<String,Object>> sports = new ArrayList<HashMap<String,Object>>();
+		ArrayList<HashMap<String, Object>> sports = new ArrayList<HashMap<String, Object>>();
 
 		// FIXME: DUMMY FUNCTION NEEDS TO BE PROPERLY IMPLEMENTED
-		HashMap<String,Object> sport1 = new HashMap<String,Object>();
-		sport1.put("sport_id", Integer.valueOf(1));
-		sport1.put("sport_name", "Chillaxing");
-		sport1.put("discipline", "Couch Potatoing");
-		sports.add(sport1);
+		String query = "SELECT SPORT.SPORT_ID, SPORT.SPORT_NAME, SPORT.DISCIPLINE FROM SPORT ORDER BY SPORT_NAME ASC";
+		Connection conn = null;
+		try {
 
-		HashMap<String,Object> sport2 = new HashMap<String,Object>();
-		sport2.put("sport_id", Integer.valueOf(2));
-		sport2.put("sport_name", "Frobnicating");
-		sport2.put("discipline", "Tweaking");
-		sports.add(sport2);
+			conn = getConnection();
+			PreparedStatement stmt = conn.prepareStatement(query);
+			
+			ResultSet rs = stmt.executeQuery();
 
-		HashMap<String,Object> sport3 = new HashMap<String,Object>();
-		sport3.put("sport_id", Integer.valueOf(3));
-		sport3.put("sport_name", "Frobnicating");
-		sport3.put("discipline", "Fiddling");
-		sports.add(sport3);
+			while (rs.next()) {
+				HashMap<String, Object> sport1 = new HashMap<String, Object>();
+				sport1.put("sport_id", rs.getInt("SPORT_ID"));
+				sport1.put("sport_name", rs.getString("SPORT_NAME"));
+				sport1.put("discipline", rs.getString("DISCIPLINE"));
+				sports.add(sport1);
+			}
+			rs.close();
+			stmt.close();
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			reallyClose(conn);
+		}
 
 		return sports;
 	}
-
 
 	/////////////////////////////////////////
 	/// Functions below don't need
