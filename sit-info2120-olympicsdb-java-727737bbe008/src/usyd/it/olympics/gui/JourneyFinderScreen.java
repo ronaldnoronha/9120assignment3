@@ -52,7 +52,8 @@ public class JourneyFinderScreen extends GuiScreen {
 		txtFrom = new JTextField();
 		
 		// TODO CHANGE TO 'address'
-		txtFrom.setText("Athletes Village");
+		//txtFrom.setText("Athletes Village");
+		txtFrom.setText("address");
 		choicePanel.add(txtFrom);
 		txtFrom.setColumns(20);
 
@@ -61,7 +62,8 @@ public class JourneyFinderScreen extends GuiScreen {
 		txtDest = new JTextField();
 		
 		// TODO CHANGE TO 'address'
-		txtDest.setText("Sydney Olympic Park, Olympic Stadium");
+		//txtDest.setText("Sydney Olympic Park, Olympic Stadium");
+		txtDest.setText("address");
 		choicePanel.add(txtDest);
 		txtDest.setColumns(20);
 
