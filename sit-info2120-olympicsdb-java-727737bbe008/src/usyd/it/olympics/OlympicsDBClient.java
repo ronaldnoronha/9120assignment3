@@ -160,6 +160,18 @@ public class OlympicsDBClient {
             setMessage(e.getMessage());
         }    
     }
+ // Medal Tally listener
+ 	public void medalTally() {
+ 		setMessage("Getting event results");
+        try {
+        	ArrayList<HashMap<String, Object>> eventDetails = db.getMedalTally();
+            gui.getMedalTallyScreen().setTuples(eventDetails);
+            gui.showMedalTallyScreen();
+            setMessage("Results fetched.");
+        } catch (OlympicsDBException e) {
+            setMessage(e.getMessage());
+        } 
+     }
 
     public void startBooking(String vehicle, Date departs) {
         setMessage("Fetching details to start booking.");
@@ -216,5 +228,8 @@ public class OlympicsDBClient {
             setMessage(e.getMessage());
         }
 	}
+	
+	
+	
 
 }

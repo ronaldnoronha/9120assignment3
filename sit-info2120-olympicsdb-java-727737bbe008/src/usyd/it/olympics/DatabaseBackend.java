@@ -97,7 +97,7 @@ public class DatabaseBackend {
 					}				
 				}
 			}
-			
+
 			rs.close();
 			stmt.close();
 			conn.close();
@@ -105,7 +105,7 @@ public class DatabaseBackend {
 			throw new OlympicsDBException("Error checking login details" + e);
 		} finally {
 			if (conn!=null){
-			reallyClose(conn);
+				reallyClose(conn);
 			}
 		}
 		return details;
@@ -242,7 +242,7 @@ public class DatabaseBackend {
 	 * @throws OlympicsDBException
 	 */
 	ArrayList<HashMap<String, Object>> getEventsOfSport(Integer sportname) throws OlympicsDBException {
-		
+
 		String query = "select event_id, sport_id, event_name, event_gender, "
 				+ "place_name, event_start "
 				+ "from sport join event using(sport_id) "
@@ -286,7 +286,7 @@ public class DatabaseBackend {
 	 * @throws OlympicsDBException
 	 */
 	ArrayList<HashMap<String, Object>> getResultsOfEvent(Integer eventId) throws OlympicsDBException {
-		
+
 		String query = "select count(*) as c "
 				+ "from individualevent where event_id = ?";
 		Connection conn = null;
@@ -314,7 +314,7 @@ public class DatabaseBackend {
 				stmt = conn.prepareStatement(query);
 				stmt.setInt(1, eventId);
 				rs = stmt.executeQuery();
-				
+
 				while (rs.next()){
 					result1 = new HashMap<String, Object>();
 					result1.put("participant",rs.getString("family_name") + ", " + rs.getString("given_names"));
@@ -325,7 +325,7 @@ public class DatabaseBackend {
 					else {
 						result1.put("country_name",country_name);
 					}
-					
+
 					String medal = rs.getString("medal");					
 					if (medal==null) {
 						result1.put("medal",null);
@@ -353,9 +353,9 @@ public class DatabaseBackend {
 				stmt.setInt(1, eventId);
 				System.out.println(true);
 				rs = stmt.executeQuery();
-				
+
 				while (rs.next()){
-					
+
 					result1 = new HashMap<String, Object>();
 					result1.put("participant",rs.getString("team_name"));
 					String country_name = rs.getString("Country_name");
@@ -365,7 +365,7 @@ public class DatabaseBackend {
 					else {
 						result1.put("country_name",country_name);
 					}
-					
+
 					String medal = rs.getString("medal");					
 					if (medal==null) {
 						result1.put("medal",null);
@@ -381,8 +381,8 @@ public class DatabaseBackend {
 					}
 					results.add(result1);					
 				}
-				
-				
+
+
 			}
 			rs.close();
 			stmt.close();
@@ -472,6 +472,107 @@ public class DatabaseBackend {
 		journey1.put("available_seats",availability);
 		return journey1;
 	}
+	ArrayList<HashMap<String, Object>> getMedalTally() throws OlympicsDBException {
+		ArrayList<HashMap<String, Object>> medals = new ArrayList<HashMap<String, Object>>();
+		String query = "select country_name, count(*) as num_medals "
+				+ "from participates join member on(athlete_id=member_id) "
+				+ "join country using(country_code) "
+				+ "where medal is not null "
+				+ "group by country_name "
+				+ "order by (num_medals) desc";
+		HashMap<String,Object> medal1 = null;
+
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			PreparedStatement stmt = conn.prepareStatement(query);			
+			ResultSet rs = stmt.executeQuery();
+			String country_name = "";
+			while (rs.next()){
+				medal1 = new HashMap<String,Object>();				
+				country_name = rs.getString("country_name");
+				if (country_name==null){
+					country_name = "Unified Team";
+				}
+				medal1.put("country_name", country_name);
+				medal1.put("gold", "0");
+				medal1.put("silver","0");
+				medal1.put("bronze","0");
+				medal1.put("total",rs.getString("num_medals"));
+				medals.add(medal1);
+			}
+			stmt.close();
+			rs.close();
+			query = "select country_name, medal, count(*) as num_medals "
+					+ "from participates join member on(athlete_id=member_id) "
+					+ "join country using(country_code) "
+					+ "where medal is not null and medal = 'G' "
+					+ "group by country_name, medal "
+					+ "order by (num_medals) desc";
+			stmt = conn.prepareStatement(query);			
+			rs = stmt.executeQuery();
+
+			while (rs.next()){
+				country_name = rs.getString("country_name");
+				if (country_name==null){
+					country_name = "Unified Team";
+				}				
+				for (int i=0;i<medals.size();i++){
+					if (medals.get(i).get("country_name").toString().equals(country_name)){
+						medals.get(i).put("gold",rs.getString("num_medals"));						
+					}
+				}	
+			}
+			query = "select country_name, medal, count(*) as num_medals "
+					+ "from participates join member on(athlete_id=member_id) "
+					+ "join country using(country_code) "
+					+ "where medal is not null and medal = 'S' "
+					+ "group by country_name, medal "
+					+ "order by (num_medals) desc";
+			stmt = conn.prepareStatement(query);			
+			rs = stmt.executeQuery();
+
+			while (rs.next()){
+				country_name = rs.getString("country_name");
+				if (country_name==null){
+					country_name = "Unified Team";
+				}				
+				for (int i=0;i<medals.size();i++){
+					if (medals.get(i).get("country_name").toString().equals(country_name)){
+						medals.get(i).put("silver",rs.getString("num_medals"));						
+					}
+				}	
+			}
+			query = "select country_name, medal, count(*) as num_medals "
+					+ "from participates join member on(athlete_id=member_id) "
+					+ "join country using(country_code) "
+					+ "where medal is not null and medal = 'B' "
+					+ "group by country_name, medal "
+					+ "order by (num_medals) desc";
+			stmt = conn.prepareStatement(query);			
+			rs = stmt.executeQuery();
+
+			while (rs.next()){
+				country_name = rs.getString("country_name");
+				if (country_name==null){
+					country_name = "Unified Team";
+				}				
+				for (int i=0;i<medals.size();i++){
+					if (medals.get(i).get("country_name").toString().equals(country_name)){
+						medals.get(i).put("bronze",rs.getString("num_medals"));						
+					}
+				}	
+			}
+
+
+			conn.close();
+		} catch (Exception e) {
+			throw new OlympicsDBException("Error getting medals tally " + e);
+		} finally {
+			if (conn!=null) reallyClose(conn);
+		}
+		return medals;
+	}
 	ArrayList<HashMap<String, Object>> getMemberBookings(String memberID) throws OlympicsDBException {
 		ArrayList<HashMap<String, Object>> bookings = new ArrayList<HashMap<String, Object>>();
 
@@ -485,7 +586,6 @@ public class DatabaseBackend {
 				+ "order by depart_time desc";
 		Connection conn = null;
 		try {
-
 			conn = getConnection();
 			PreparedStatement stmt = conn.prepareStatement(query);
 			stmt.setString(1, memberID);
@@ -724,9 +824,10 @@ public class DatabaseBackend {
 		String query = "select * from staff where member_id = ?";
 		boolean staffExists = false;
 		boolean availability = false;
+		Connection conn = null;
 		try
 		{
-			Connection conn = getConnection();
+			conn = getConnection();
 			conn.setAutoCommit(false);
 			stmt1  = conn.prepareStatement(query);
 			stmt1.setString(1,byStaff);
@@ -830,8 +931,9 @@ public class DatabaseBackend {
 			}
 		}
 		catch (Exception e) {
-			System.err.println(e);
-			throw new OlympicsDBException("Booking couldnt be made member "+ forMember+" "+byStaff+" "+Vehicle+" "+departs+ e);
+			throw new OlympicsDBException("Error getting sports " + e);
+		} finally {
+			if (conn!=null) reallyClose(conn);
 		}
 		return booking;
 	}

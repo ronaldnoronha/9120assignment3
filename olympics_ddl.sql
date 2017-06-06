@@ -131,6 +131,7 @@ CREATE TABLE Journey (
     to_place	    INT NOT NULL REFERENCES Place DEFERRABLE,
     vehicle_code	CHAR(8) NOT NULL REFERENCES Vehicle  DEFERRABLE,
     nbooked		    INTEGER DEFAULT 0 NOT NULL,
+    arrive_time TIMESTAMP,	
     UNIQUE (vehicle_code, depart_time) -- natural key
 );
 
