@@ -56,6 +56,7 @@ public final class GuiFrontEnd {
     private final String optHistory = "Browse Bookings";
     private final String optLogOut = "Log Out";
 	private final String optBrowseEvents = "Browse Events";
+	private final String optMakeBooking = "Make Booking";
 
     public GuiFrontEnd(OlympicsDBClient root) {
         client = root;
@@ -99,6 +100,14 @@ public final class GuiFrontEnd {
             @Override
             public void actionPerformed(ActionEvent arg0) {
                 client.showEventBrowser();
+            }
+        });
+        
+        // TODO: make conditional on member type
+        addMenuOption(optMakeBooking, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+                client.startBooking("", null);
             }
         });
         

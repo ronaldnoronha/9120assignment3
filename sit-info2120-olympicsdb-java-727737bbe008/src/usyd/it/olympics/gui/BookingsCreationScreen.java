@@ -71,8 +71,8 @@ public class BookingsCreationScreen extends GuiScreen {
 	}
 
 	public void startBooking(String vehicle, Date departs) {
-		txtVehicleCode.setText(vehicle);
-		startDates.setValue(departs);
+		if (vehicle!=null) txtVehicleCode.setText(vehicle);
+		if (departs!=null) startDates.setValue(departs);
 	}
 
 }
