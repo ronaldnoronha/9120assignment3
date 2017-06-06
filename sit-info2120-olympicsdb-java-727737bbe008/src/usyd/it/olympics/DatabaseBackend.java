@@ -473,14 +473,38 @@ public class DatabaseBackend {
 		return journey1;
 	}
 	ArrayList<HashMap<String, Object>> getMedalTally() throws OlympicsDBException {
-		ArrayList<HashMap<String, Object>> bookings = new ArrayList<HashMap<String, Object>>();
-		//String query
+		ArrayList<HashMap<String, Object>> medals = new ArrayList<HashMap<String, Object>>();
+		String query = "select country_name, medal, count(*) as num_medals "
+				+ "from participates join member on(athlete_id=member_id) "
+				+ "join country using(country_code) "
+				+ "where medal is not null and medal = 'G' "
+				+ "group by country_name, medal "
+				+ "order by (num_medals) desc";
+		HashMap<String,Object> medal1 = null;
 		
-		
-		
-		
-		
-		return bookings;
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			PreparedStatement stmt = conn.prepareStatement(query);			
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()){
+				medal1 = new HashMap<String,Object>();
+				medal1.put("country_name", rs.getString("country_name"));
+				medal1.put("gold", rs.getString("num_medals"));
+				medal1.put("silver","0");
+				medal1.put("bronze","0");
+				medal1.put("total","0");
+				medals.add(medal1);
+			}
+			stmt.close();
+			rs.close();
+			conn.close();
+		} catch (Exception e) {
+			throw new OlympicsDBException("Error getting medals tally " + e);
+		} finally {
+			if (conn!=null) reallyClose(conn);
+		}
+		return medals;
 	}
 	ArrayList<HashMap<String, Object>> getMemberBookings(String memberID) throws OlympicsDBException {
 		ArrayList<HashMap<String, Object>> bookings = new ArrayList<HashMap<String, Object>>();
@@ -495,7 +519,6 @@ public class DatabaseBackend {
 				+ "order by depart_time desc";
 		Connection conn = null;
 		try {
-
 			conn = getConnection();
 			PreparedStatement stmt = conn.prepareStatement(query);
 			stmt.setString(1, memberID);

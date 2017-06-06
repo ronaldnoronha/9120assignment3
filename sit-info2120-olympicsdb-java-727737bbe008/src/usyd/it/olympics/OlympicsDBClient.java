@@ -162,15 +162,15 @@ public class OlympicsDBClient {
     }
  // Medal Tally listener
  	public void medalTally() {
- 		setMessage("Fetching booking history.");
-         try {
-             ArrayList<HashMap<String,Object>> bookings = db.getMemberBookings(memberId);
-             gui.getMedalTallyScreen().showMedalTally(bookings);
-             gui.showMedalTallyScreen();
-             setMessage("All bookings fetched.");
-         } catch (OlympicsDBException e) {
-             setMessage(e.getMessage());
-         } 
+ 		setMessage("Getting event results");
+        try {
+        	ArrayList<HashMap<String, Object>> eventDetails = db.getMedalTally();
+            gui.getMedalTallyScreen().setTuples(eventDetails);
+            gui.showMedalTallyScreen();
+            setMessage("Results fetched.");
+        } catch (OlympicsDBException e) {
+            setMessage(e.getMessage());
+        } 
      }
 
     public void startBooking(String vehicle, Date departs) {
