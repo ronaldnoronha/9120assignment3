@@ -27,7 +27,7 @@ public class MedalTallyScreen extends GuiScreen {
     private final HashMapTupleTabelModel bookingList = new HashMapTupleTabelModel(
     		bookConv, 
     		new String[] { "vehicle_code","origin_name", "dest_name", "when_departs","when_arrives"},
-    		new String[] { "Vehicle", "Origin","Destination","Departs","Arrives"});
+    		new String[] { "Country", "Gold","Silver","Bronze","Total"});
     private final JButton btnGetDetails;
     private final ListSelectionModel selectionModel;
 	

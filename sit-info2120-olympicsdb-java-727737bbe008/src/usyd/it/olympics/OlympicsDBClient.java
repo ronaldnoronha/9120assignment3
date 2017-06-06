@@ -166,7 +166,7 @@ public class OlympicsDBClient {
          try {
              ArrayList<HashMap<String,Object>> bookings = db.getMemberBookings(memberId);
              gui.getMedalTallyScreen().showMedalTally(bookings);
-             gui.showHistoryScreen();
+             gui.showMedalTallyScreen();
              setMessage("All bookings fetched.");
          } catch (OlympicsDBException e) {
              setMessage(e.getMessage());

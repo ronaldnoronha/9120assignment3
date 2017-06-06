@@ -472,6 +472,16 @@ public class DatabaseBackend {
 		journey1.put("available_seats",availability);
 		return journey1;
 	}
+	ArrayList<HashMap<String, Object>> getMedalTally() throws OlympicsDBException {
+		ArrayList<HashMap<String, Object>> bookings = new ArrayList<HashMap<String, Object>>();
+		//String query
+		
+		
+		
+		
+		
+		return bookings;
+	}
 	ArrayList<HashMap<String, Object>> getMemberBookings(String memberID) throws OlympicsDBException {
 		ArrayList<HashMap<String, Object>> bookings = new ArrayList<HashMap<String, Object>>();
 

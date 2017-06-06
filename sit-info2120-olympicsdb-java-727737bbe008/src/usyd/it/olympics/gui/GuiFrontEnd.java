@@ -200,6 +200,11 @@ public final class GuiFrontEnd {
 		screenSelect.show(mainPanel, "historyScreen");
 		setNavButtons(true);
 	}
+	public void showMedalTallyScreen() {
+		screenSelect.show(mainPanel, "medalTallyScreen");
+		setNavButtons(true);
+	}
+
 
 	public void showBookingsCreationScreen() {
 		screenSelect.show(mainPanel, "bookingsCreationScreen");
