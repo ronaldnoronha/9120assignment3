@@ -121,12 +121,12 @@ public class DatabaseBackend {
 	 * @throws OlympicsDBException
 	 */
 	public HashMap<String, Object> getMemberDetails(String memberID) throws OlympicsDBException {
-
+		HashMap<String, Object> details = null;
 		String query = "";
 		PreparedStatement stmt = null;
 		Connection conn = null;
 		try {
-			HashMap<String, Object> details = new HashMap<String, Object>();
+			
 			conn = getConnection();
 
 			String[] member_types = {"athlete", "official", "staff"};
@@ -136,92 +136,93 @@ public class DatabaseBackend {
 				stmt.setString(1,memberID);
 				ResultSet rs = stmt.executeQuery();
 				if(rs.next()){
-					if (details.get("member_type")==null){
+					if (details==null){
+						details = new HashMap<String, Object>();
 						details.put("member_type",member_types[i]);
 					}else{
 						details.put("member_type",details.get("member_type")+", "+member_types[i]);						
 					}					
 				}				
 			}
-
-			query = "select title, given_names, family_name, place_name,"
-					+ "country_name "
-					+ "from Member join place on(accommodation=place_id) "
-					+ "join country using(country_code) "
-					+ "where member_id = ?";
-			stmt = conn.prepareStatement(query);
-			stmt.setString(1,memberID);
-			ResultSet rs = stmt.executeQuery();
-
-			while (rs.next()){
-				details.put("member_id", memberID);
-				details.put("title", rs.getString("title"));			
-				details.put("first_name",rs.getString("given_names"));
-				details.put("family_name",rs.getString("family_name"));
-				details.put("residence",rs.getString("place_name"));
-				details.put("country_name",rs.getString("country_name"));
-			}
-			int bronze = 0;
-			int silver = 0;
-			int gold = 0;
-			if (details.get("member_type").toString().contains("athlete")){
-				query = "select count(*) as num_medal, medal "
-						+ "from participates "
-						+ "where medal is not null and athlete_id = ?"
-						+ "group by medal";			
+			if (details!=null){
+				query = "select title, given_names, family_name, place_name,"
+						+ "country_name "
+						+ "from Member join place on(accommodation=place_id) "
+						+ "join country using(country_code) "
+						+ "where member_id = ?";
 				stmt = conn.prepareStatement(query);
 				stmt.setString(1,memberID);
+				ResultSet rs = stmt.executeQuery();
+
+				while (rs.next()){
+					details.put("member_id", memberID);
+					details.put("title", rs.getString("title"));			
+					details.put("first_name",rs.getString("given_names"));
+					details.put("family_name",rs.getString("family_name"));
+					details.put("residence",rs.getString("place_name"));
+					details.put("country_name",rs.getString("country_name"));
+				}
+				int bronze = 0;
+				int silver = 0;
+				int gold = 0;
+				if (details.get("member_type").toString().contains("athlete")){
+					query = "select count(*) as num_medal, medal "
+							+ "from participates "
+							+ "where medal is not null and athlete_id = ?"
+							+ "group by medal";			
+					stmt = conn.prepareStatement(query);
+					stmt.setString(1,memberID);
+					rs = stmt.executeQuery();
+					while (rs.next()){												
+						if (rs.getString("medal").equals("B")){
+							bronze=rs.getInt("num_medal");
+						}
+						else if (rs.getString("medal").equals("S")){
+							silver=rs.getInt("num_medal");
+						}
+						else if (rs.getString("medal").equals("G")){
+							gold=rs.getInt("num_medal");
+						}
+					}
+					rs.close();
+					stmt.close();
+					// team medals
+					query  ="select count(*) as num_medal,medal "
+							+ "from team natural join teammember "
+							+ "where medal is not null and athlete_id = ?"
+							+ "group by medal";
+					stmt = conn.prepareStatement(query);
+					stmt.setString(1,memberID);				
+					rs = stmt.executeQuery();				
+					while (rs.next()){					
+						if (rs.getString("medal").equals("B")){
+							bronze+=rs.getInt("num_medal");
+						}
+						else if (rs.getString("medal").equals("S")){
+							silver+=rs.getInt("num_medal");
+						}
+						else if (rs.getString("medal").equals("G")){
+							gold+=rs.getInt("num_medal");
+						}
+					}
+					details.put("num_gold", Integer.valueOf(gold));
+					details.put("num_silver", Integer.valueOf(silver));
+					details.put("num_bronze", Integer.valueOf(bronze));
+				}else{
+					details.put("num_gold",null);
+					details.put("num_silver",null);
+					details.put("num_bronze",null);
+				}
+				query = "select count(*) as c from Booking where booked_for = ?";
+				stmt = conn.prepareStatement(query);			
+				stmt.setString(1, memberID);
 				rs = stmt.executeQuery();
-				while (rs.next()){												
-					if (rs.getString("medal").equals("B")){
-						bronze=rs.getInt("num_medal");
-					}
-					else if (rs.getString("medal").equals("S")){
-						silver=rs.getInt("num_medal");
-					}
-					else if (rs.getString("medal").equals("G")){
-						gold=rs.getInt("num_medal");
-					}
+				while (rs.next()){			
+					details.put("num_bookings",rs.getInt("c"));
 				}
 				rs.close();
-				stmt.close();
-				// team medals
-				query  ="select count(*) as num_medal,medal "
-						+ "from team natural join teammember "
-						+ "where medal is not null and athlete_id = ?"
-						+ "group by medal";
-				stmt = conn.prepareStatement(query);
-				stmt.setString(1,memberID);				
-				rs = stmt.executeQuery();				
-				while (rs.next()){					
-					if (rs.getString("medal").equals("B")){
-						bronze+=rs.getInt("num_medal");
-					}
-					else if (rs.getString("medal").equals("S")){
-						silver+=rs.getInt("num_medal");
-					}
-					else if (rs.getString("medal").equals("G")){
-						gold+=rs.getInt("num_medal");
-					}
-				}
-				details.put("num_gold", Integer.valueOf(gold));
-				details.put("num_silver", Integer.valueOf(silver));
-				details.put("num_bronze", Integer.valueOf(bronze));
-			}else{
-				details.put("num_gold",null);
-				details.put("num_silver",null);
-				details.put("num_bronze",null);
 			}
-			query = "select count(*) as c from Booking where booked_for = ?";
-			stmt = conn.prepareStatement(query);			
-			stmt.setString(1, memberID);
-			rs = stmt.executeQuery();
-			while (rs.next()){			
-				details.put("num_bookings",rs.getInt("c"));
-			}
-			rs.close();
 			stmt.close();			
-			rs.close();
 			conn.close();
 			return details;
 		} catch (Exception e) {
@@ -536,8 +537,8 @@ public class DatabaseBackend {
 			}
 			stmt.close();
 			rs.close();
-			
-			
+
+
 			query = "select country_name, medal, count(*) as num_medals "
 					+ "from participates join member on(athlete_id=member_id) "
 					+ "join country using(country_code) "
@@ -598,7 +599,7 @@ public class DatabaseBackend {
 					}
 				}	
 			}
-			
+
 
 			conn.close();
 		} catch (Exception e) {
