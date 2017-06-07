@@ -503,6 +503,41 @@ public class DatabaseBackend {
 			}
 			stmt.close();
 			rs.close();
+			query = "select country_name, count(*) as num_medals "
+					+ "from country join team using(country_code) "
+					+ "where medal is not null "
+					+ "group by country_name";			
+			stmt = conn.prepareStatement(query);			
+			rs = stmt.executeQuery();
+			boolean countryOnList = false;
+			int num_medals;
+			while (rs.next()){								
+				country_name = rs.getString("country_name");
+				if (country_name==null){
+					country_name = "Unified Team";
+				}
+				// check if team already on the list
+				countryOnList = false;
+				for (int i=0;i<medals.size();i++){
+					if (medals.get(i).get("country_name").toString().equals(country_name)){
+						countryOnList = true;
+						num_medals = rs.getInt("num_medals")+Integer.parseInt(medals.get(i).get("total").toString());						
+					}
+				}
+				if (!countryOnList){
+					medal1 = new HashMap<String,Object>();
+					medal1.put("country_name", country_name);
+					medal1.put("gold", "0");
+					medal1.put("silver","0");
+					medal1.put("bronze","0");
+					medal1.put("total",rs.getString("num_medals"));
+					medals.add(medal1);
+				}				
+			}
+			stmt.close();
+			rs.close();
+			
+			
 			query = "select country_name, medal, count(*) as num_medals "
 					+ "from participates join member on(athlete_id=member_id) "
 					+ "join country using(country_code) "
@@ -563,7 +598,7 @@ public class DatabaseBackend {
 					}
 				}	
 			}
-
+			
 
 			conn.close();
 		} catch (Exception e) {
@@ -593,7 +628,6 @@ public class DatabaseBackend {
 
 			while (rs.next()) {
 				HashMap<String, Object> booking = new HashMap<String, Object>();
-
 				booking.put("journey_id", rs.getInt("journey_id"));
 				booking.put("vehicle_code", rs.getString("vehicle_code"));
 				booking.put("origin_name", rs.getString("origin"));
